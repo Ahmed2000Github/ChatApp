@@ -1,0 +1,46 @@
+﻿
+
+<AuthorizeView>
+    <Authorized>
+        <MudMenu>
+            <ActivatorContent>
+                <CustomAvatar ImagePath="@context.User.GetClaim(ClaimTypes.Uri)" FirstName="@context.User.GetClaim(ClaimTypes.Name)" Size="Size.Medium" />
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem OnClick="ProfileCliked">Profile </MudMenuItem>
+                <MudMenuItem OnClick="LogoutCliked">Sign Out</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    </Authorized>
+</AuthorizeView>
+@code
+{
+
+    private async Task ProfileCliked()
+    {
+        Navigation.NavigateTo("/profile");
+    }
+    private async Task LogoutCliked()
+    {
+        var parameters = new DialogParameters<NotificationDialog>();
+        parameters.Add(x => x.ContentText, "Do you really want to Logout from these account? This process cannot be undone.");
+        parameters.Add(x => x.ButtonText, "Logout");
+        parameters.Add(x => x.Color, Color.Error);
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialog = DialogService.Show<NotificationDialog>("Logout", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LocalStorage.RemoveItemAsync("AccessToken");
+            await LocalStorage.RemoveItemAsync("RefreshToken");
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            Navigation.NavigateTo("/login");
+            if (DisplayServices.DisplayState != DisplayState.BothState)
+            {
+                DisplayServices.Notify(DisplayState.ContactState);
+            }
+            CurrentContactServices.Notify(null);
+        }
+    }
+}

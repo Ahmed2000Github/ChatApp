@@ -1,0 +1,51 @@
+﻿@page "/profile"
+
+<PageTitle>Profile</PageTitle>
+<style>
+    .display-paper-width{
+        width:60vw;
+    }
+    .rounded-image{
+        border-radius:75px;
+        border-width:15px;
+        border-color: var(--mud-palette-primary);
+    }
+    .div-height{
+        height:calc(100vh - 100px);
+    }
+
+    @@media(max-width:600px){
+        .display-paper-width {
+            width: 80vw;
+        }
+    }
+</style>
+
+<AuthorizeView>
+    <Authorized>
+        <MudContainer Class="d-flex justify-center align-center div-height">
+        <MudPaper Class="pa-2 ma-2 display-paper-width" Outlined="true">
+        <MudGrid Justify="Justify.Center" >
+                    <MudItem xs="12" Class="d-flex justify-center">
+                    <MudImage Src="@(AppConfig.BASE_URL+context.User.GetClaim(ClaimTypes.Uri))" Alt="Avatar" Height="150" Class="rounded-image" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.body1" Style="font-weight:bold" Align="Align.Center">@context.User.GetClaim(ClaimTypes.Name)</MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudDivider></MudDivider>
+                <MudText Class="my-6" Typo="Typo.body2" Align="Align.Center">@context.User.GetClaim(ClaimTypes.Email)</MudText>
+            </MudItem>
+        </MudGrid>
+        </MudPaper>
+        </MudContainer>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    protected override void OnInitialized()
+    {
+        LayoutService.IsProfilePage = true;
+    }
+}
+

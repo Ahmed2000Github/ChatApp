@@ -1,0 +1,168 @@
+﻿@inherits LayoutComponentBase
+@implements IAsyncDisposable
+
+<MudThemeProvider @ref="@_mudThemeProvider" @bind-IsDarkMode="@_isDarkMode" Theme="MyCustomTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<AuthorizeView>
+    <Authorized>
+        <MudLayout>
+            <MudAppBar Elevation="1">
+                <MudStack Row Class="align-center">
+                    @if (DisplayServices.DisplayState == DisplayState.ChatState)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Style="color:white" OnClick="OnBackCliked"></MudIconButton>
+                    }
+                    else if (LayoutService.IsProfilePage)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Style="color:white" OnClick="OnProfileBackCliked"></MudIconButton>
+                    }
+
+                    <MudImage Src="_content/ChatAppShared/images/logo.png" Width="60" Height="60" Alt="Logo" Elevation="0" />
+                </MudStack>
+
+                <MudSpacer />
+                <UserActions />
+            </MudAppBar>
+            <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+                <NavMenu />
+            </MudDrawer>
+            <MudMainContent Class="pa-1" Style="margin-top:100px">
+                @Body
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    bool _drawerOpen = false;
+    bool _isDarkMode = false;
+    private ClaimsPrincipal _user;
+    // Change the theme mode icon
+    private string modeIcon => !_isDarkMode ? Icons.Filled.DarkMode : Icons.Filled.LightMode;
+
+
+    // Get defaut user's browser theme mode
+    private MudThemeProvider _mudThemeProvider;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // if (firstRender)
+        // {
+        //     _isDarkMode = await _mudThemeProvider.GetSystemPreference();
+        //     StateHasChanged();
+        // }
+    }
+    [CascadingParameter] protected Task<AuthenticationState> AuthStat { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+        DisplayServices.OnChange += StateHasChanged;
+        _user = (await AuthStat).User;
+        if (!_user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            var result = await TokenManager.CheckTokenExperatibility();
+            if (result)
+            {
+                await ChatNotificationServices.Start(_user.GetClaim(ClaimTypes.NameIdentifier));
+            }
+        }
+
+    }
+
+    // Toggle drawer visibility
+    bool open;
+    Anchor anchor;
+
+    void OpenDrawer(Anchor anchor)
+    {
+        _drawerOpen = true;
+        this.anchor = anchor;
+    }
+
+    // Close Drower
+    private void closeDrawer()
+    {
+        _drawerOpen = false;
+    }
+
+    void OnBackCliked()
+    {
+        if (DisplayServices.DisplayState != DisplayState.BothState)
+        {
+            DisplayServices.Notify(DisplayState.ContactState);
+        }
+        CurrentContactServices.Notify(null);
+    } 
+    void OnProfileBackCliked()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+
+    // Specify the app theme
+    MudTheme MyCustomTheme = new MudTheme()
+        {
+            Palette = new Palette()
+            {
+                Primary = "#482ff7",
+                Background = "#F4FAFB",
+                Surface = "#F4FAFB",
+                DrawerBackground = "#FBFDFD",
+                AppbarBackground = "#482FF7",
+                TextPrimary = "#000000",
+                AppbarText = "#000000",
+                DrawerText = "#000000",
+                DrawerIcon = "#000000",
+                DarkLighten = "#eaecf2",
+                LinesInputs = "#000000",
+                LinesDefault = "#00000055",
+                ActionDefault = "#000000",
+                TextSecondary = "#00000088",
+                SuccessContrastText = "#000000",
+
+            },
+            PaletteDark = new Palette()
+            {
+                Primary = "#482ff7",
+                Background = "#1a1a27",
+                Surface = "#1a1a27",
+                AppbarBackground = "#482FF7",
+                TextPrimary = "#ffffff",
+                AppbarText = "#000000",
+                DrawerText = "#ffffff",
+                DrawerIcon = "#ffffff",
+                DrawerBackground = "#000000",
+                DarkLighten = "#F5F9FF",
+                LinesInputs = "#ffffff",
+                LinesDefault = "#ffffff55",
+                ActionDefault = "#ffffff",
+                TextSecondary = "#ffffff88",
+                SuccessContrastText = "#ffffff",
+
+            },
+            LayoutProperties = new LayoutProperties()
+            {
+                DrawerWidthLeft = "260px",
+                DrawerWidthRight = "300px",
+                AppbarHeight = "100px"
+            }
+        };
+
+    // Handle theme mode button click
+    private void changeThemeModeClicked()
+    {
+        _isDarkMode = !_isDarkMode;
+        StateHasChanged();
+    }
+    public async ValueTask DisposeAsync()
+    {
+        DisplayServices.OnChange -= StateHasChanged;
+        await ChatNotificationServices.DisposeAsync();
+
+    }
+}

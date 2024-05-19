@@ -1,0 +1,47 @@
+
+<style>
+    .mud-input-outlined:focus-within path {
+        color: var(--mud-palette-primary) !important;
+    }
+
+    .mud-input-error .mud-icon-root, .mud-input-error:focus-within path {
+        color: var(--mud-palette-error) !important;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .h100 {
+        height: 100vh
+    }
+
+</style>
+
+
+<CascadingAuthenticationState>
+<Router AppAssembly="@typeof(SharedApp).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView  RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" >
+            <NotAuthorized>
+                Not authorized to see this content.
+            </NotAuthorized>
+        </AuthorizeRouteView>
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)" > 
+            <div class="d-flex justify-center flex-column align-center">
+                <MudImage Src="_content/ChatAppShared/images/not-found.svg" Width="200" Height="200" Alt="Logo" Elevation="0" />
+            <MudText Typo="Typo.h6">
+                This page does not exist.
+            </MudText>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>
+</CascadingAuthenticationState>

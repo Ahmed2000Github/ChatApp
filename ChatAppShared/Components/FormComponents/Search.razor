@@ -1,0 +1,34 @@
+﻿
+
+
+
+
+<MudPaper Width="100%" Class="py-4 px-0 absolute mud-palette-background" Style="left:0px;top:0px">
+    <MudTextField @bind-Value="TextValue"
+                  id="@inputId"
+                  OnAdornmentClick="HandleAdornmentClicked"
+                  OnKeyUp="HandleTextFieldChange"
+                  Label="Search..."
+                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Adornment="Adornment.End"
+                  AdornmentColor="Color.Primary"
+                  AdornmentIcon="@Icons.Material.Filled.Search"></MudTextField>
+</MudPaper>
+
+
+@code {
+
+    const string inputId = "searchInput";
+
+    private string TextValue;
+
+    private async Task HandleTextFieldChange(KeyboardEventArgs args)
+    {
+        var searchText = await JsRuntime.InvokeAsync<string>("getInputValue", inputId);
+        ContactsServices.Filter(searchText ?? "");
+    }
+    private async Task HandleAdornmentClicked(MouseEventArgs args)
+    {
+        ContactsServices.Filter(TextValue ?? "");
+    }
+}

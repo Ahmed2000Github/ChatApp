@@ -1,0 +1,104 @@
+﻿@page "/"
+@implements IDisposable
+
+<PageTitle>Home</PageTitle>
+
+
+<style>
+  
+    .chat-page-constraints {
+        max-height: calc(100vh - 110px);
+        min-height: calc(100vh - 110px);
+    }
+
+    .mud-input-outlined-border {
+        border: none !important;
+    }
+    .message-animation {
+  display: inline-block;
+  animation: pulse 0.5s infinite alternate;
+}
+
+@@keyframes pulse {
+  0% {
+    content: "Sending message..";
+  }
+  50% {
+    content: "Sending message...";
+  }
+  100% {
+    content: "Sending message....";
+  }
+}
+</style>
+        <MudGrid Spacing="1" Justify="Justify.Center">
+            @if (DisplayServices.DisplayState == DisplayState.ContactState || DisplayServices.DisplayState == DisplayState.BothState)
+            {
+                <MudItem xs="12" md="4" Class="relative">
+                    <Contacts />
+                </MudItem>
+            }
+            @if (DisplayServices.DisplayState == DisplayState.ChatState || DisplayServices.DisplayState == DisplayState.BothState)
+            {
+                <MudItem xs="12" md="8" Class="relative chat-page-constraints">
+            @if (CurrentContactServices.CurrentContact != null)
+            {
+            <ContactStatusBar />
+            }
+
+                    <Chat  />
+            @if (CurrentContactServices.CurrentContact != null)
+            {
+                <SendMessageForm/>
+            }
+                </MudItem>
+            }
+        </MudGrid>
+
+@code {
+    DisplayState _state = DisplayState.BothState;
+    bool _isBackVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        DisplayServices.OnChange += StateHasChanged;
+        CurrentContactServices.OnChange += StateHasChanged;
+        LayoutService.IsProfilePage = false;
+
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointListener.WindowChangeListener(BreakPointToDispalyState);
+        }
+    }
+
+
+    private void BreakPointToDispalyState(Breakpoint breakpoint)
+    {
+        switch (breakpoint)
+        {
+            case Breakpoint.Xs:
+            case Breakpoint.Sm:
+                if (CurrentContactServices.CurrentContact is null)
+                {
+                    DisplayServices.Notify(DisplayState.ContactState);
+                }
+                else
+                {
+                    DisplayServices.Notify(DisplayState.ChatState);
+                }
+                break;
+            default:
+                DisplayServices.Notify(DisplayState.BothState);
+                break;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+    public void Dispose()
+    {
+        DisplayServices.OnChange -= StateHasChanged;
+        CurrentContactServices.OnChange -= StateHasChanged;
+    }
+}

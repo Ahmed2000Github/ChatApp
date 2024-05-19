@@ -1,0 +1,47 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using Blazored.LocalStorage
+@using ChatAppShared.Services
+@using ChatAppShared.Services.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@using System.Net
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Text.Json
+@using Microsoft.JSInterop
+@using MudBlazor
+@using MudBlazor.Services
+@using System.Security.Claims
+@using ChatAppShared
+@using ChatAppShared.Shared
+@using ChatAppShared.Pages
+@using ChatAppShared.Components
+@using ChatAppShared.Configurations
+@using ChatAppShared.Components.DialogComponents
+@using ChatAppShared.Components.FormComponents
+@using ChatAppShared.Components.MessageTypeComponents
+@using ChatAppShared.Components.SubComponents
+@using ChatAppShared.Models
+@using ChatAppCore.DTOs
+@using ChatAppCore.Entities
+
+
+
+@inject HttpClient httpClient
+@inject IJSRuntime JsRuntime
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage;
+@inject NavigationManager Navigation
+@inject ITokenManager TokenManager
+@inject IContactsServices ContactsServices
+@inject ICurrentContactServices CurrentContactServices
+@inject IChatNotificationServices ChatNotificationServices
+@inject IDisplayServices DisplayServices
+@inject LayoutService LayoutService
+@inject IBreakpointService BreakpointListener
+@inject IDialogService DialogService
+
+

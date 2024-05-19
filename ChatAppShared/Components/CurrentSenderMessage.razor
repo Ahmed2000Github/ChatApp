@@ -1,0 +1,39 @@
+﻿
+
+<style>
+    .currentSender-background {
+        background-color: var(--mud-palette-primary);
+        border-bottom-right-radius: 0px;
+    }
+
+    .current-triangle {
+        width: 0;
+        height: 0;
+        border: solid 10px;
+        border-color: transparent transparent var(--mud-palette-primary) var(--mud-palette-primary);
+    }
+</style>
+
+
+<MudSpacer />
+<MudItem xs="12" Class="d-flex justify-center flex-column pa-2 gap-1 ma-4" >
+    <MudContainer Class="d-flex align-end justify-end">
+        <MudPaper Class="currentSender-background pa-2" Elevation="0">
+          <ShowMessageContent Message="@message" />
+        </MudPaper>
+        <div class="current-triangle"></div>
+    </MudContainer>
+    <MudContainer Class="d-flex align-center justify-end">
+        <MudText Typo="Typo.inherit" Style="font-weight:bold; opacity:0.5">@message.SentDate.ToString("HH:mm")</MudText>
+        <AuthorizeView>
+            <Authorized>
+        <CustomAvatar ImagePath="@context.User.GetClaim(ClaimTypes.Uri)" FirstName="@context.User.GetClaim(ClaimTypes.Name)" Size="Size.Small" />
+            </Authorized>
+        </AuthorizeView>
+    </MudContainer>
+</MudItem>
+
+@code {
+    [Parameter]
+    public MessageDTO message { get; set; }
+}

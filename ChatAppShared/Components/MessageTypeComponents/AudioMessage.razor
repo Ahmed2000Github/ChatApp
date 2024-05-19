@@ -1,0 +1,41 @@
+﻿
+<style>
+    audio {
+        width: @(_size.width+"px");
+        height: @(_size.height + "px") !important;
+    }
+</style>
+
+    <audio controls>
+    <source src="@($"{AppConfig.BASE_URL}{Src}")" type="audio/mpeg">
+        Your browser does not support the audio tag.
+    </audio>
+
+@code {
+    [Parameter]
+    public string Src { get; set; }
+    [Parameter]
+    public string ImageName { get; set; }
+    private (int width, int height) _size = (332, 50);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointListener.WindowChangeListener(AdjustImageSize);
+        }
+    }
+    private void AdjustImageSize(Breakpoint breakpoint)
+    {
+        if (breakpoint == Breakpoint.Xs)
+        {
+            _size = (232, 50);
+            StateHasChanged();
+        }
+        else
+        {
+            _size = (332, 50);
+            StateHasChanged();
+        }
+    }
+}

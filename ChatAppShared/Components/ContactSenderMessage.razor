@@ -1,0 +1,39 @@
+﻿
+<style>
+    .contact-triangle {
+        width: 0;
+        height: 0;
+        border: solid 10px;
+        border-color: transparent var(--mud-palette-dark-lighten) var(--mud-palette-dark-lighten) transparent;
+    }
+
+    .contactSender-background {
+        background-color: var(--mud-palette-dark-lighten);
+        border-bottom-left-radius:0px;
+    }
+</style>
+
+
+
+<MudItem xs="12" Class="ma-4" >
+    <MudContainer Class="d-flex justify-center align-end pa-2">
+        <CustomAvatar ImagePath="@CurrentContactServices.CurrentContact?.ContactAvatar" FirstName="@CurrentContactServices.CurrentContact?.FirstName" Size="Size.Small" />
+        <MudContainer Class="d-flex align-end">
+        <div class="contact-triangle"></div>
+        <MudPaper Class="contactSender-background pa-2" Elevation="0" Style="color:black !important">
+            <ShowMessageContent Message="@message" TextColor="black" />
+        </MudPaper>
+    </MudContainer>
+    <MudSpacer />
+    </MudContainer>
+    <MudContainer Class="pl-16">
+        <MudText Typo="Typo.inherit" Style="font-weight:bold; opacity:0.5">@message.SentDate.ToString("HH:mm")</MudText>
+        <MudSpacer />
+    </MudContainer>
+</MudItem>
+    
+
+@code {
+    [Parameter]
+    public MessageDTO message { get; set; }
+}

@@ -1,0 +1,22 @@
+﻿
+
+<style>
+    .other-file-button{
+        background-color: gray !important;
+        color: white;
+        width: 200px;
+        height: 60px;
+        box-shadow:none;
+    }
+</style>
+<MudStack Justify="Justify.Center" Class="gap-0">
+    <MudButton Variant="Variant.Filled" Class="other-file-button" EndIcon="@Icons.Material.Outlined.InsertDriveFile" Link="@($"{AppConfig.BASE_URL}{Src}")" Target="_blank">
+        @(FileName.Length > 20 ? FileName.Substring(0, 12) + "..." + FileName.Split(".").Last() : FileName)
+    </MudButton>
+</MudStack>
+@code {
+    [Parameter]
+    public string Src { get; set; }
+    [Parameter]
+    public string FileName { get; set; }
+}

@@ -1,0 +1,30 @@
+﻿<MudStack Justify="Justify.Center" Class="gap-0 align-center">
+    @switch (Message.Type)
+    {
+        case MessageType.Image:
+            <ImageMessage Src="@Message.Content.Split(AppConfig.MESSAGE_SEPARATOR).Last()" />
+            <MudText Typo="Typo.body1" Align="Align.Center" Style="@($"font-weight:bold;color:{TextColor}")">@Message.Content.Split(AppConfig.MESSAGE_SEPARATOR).First()</MudText>
+            break;
+        case MessageType.Video:
+            <VideoMessage Src="@Message.Content.Split(AppConfig.MESSAGE_SEPARATOR).Last()" />
+            <MudText Typo="Typo.body1" Align="Align.Center" Style="@($"font-weight:bold;color:{TextColor}")">@Message.Content.Split(AppConfig.MESSAGE_SEPARATOR).First()</MudText>
+            break;
+        case MessageType.Audio:
+            <AudioMessage Src="@Message.Content.Split(AppConfig.MESSAGE_SEPARATOR).Last()" />
+            <MudText Typo="Typo.body1" Align="Align.Center" Style="@($"font-weight:bold;color:{TextColor}")">@Message.Content.Split(AppConfig.MESSAGE_SEPARATOR).First()</MudText>
+            break;
+        case MessageType.Other:
+            <OtherFilesMessage Src="@Message.Content.Split(AppConfig.MESSAGE_SEPARATOR).Last()" FileName="@Message.Content.Split(AppConfig.MESSAGE_SEPARATOR).First()" />
+            break;
+        default:
+            <MudText Typo="Typo.subtitle1" Style="@($"font-weight:bold;color:{TextColor}")">@Message.Content</MudText>
+            break;
+    }
+</MudStack>
+
+@code {
+    [Parameter]
+    public MessageDTO Message { get; set; }
+    [Parameter]
+    public string TextColor { get; set; } = "white";
+}

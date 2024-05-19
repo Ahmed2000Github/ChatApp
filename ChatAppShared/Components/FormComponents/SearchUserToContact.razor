@@ -1,0 +1,40 @@
+﻿
+
+
+
+
+<MudPaper Width="100%" Class="py-4 px-0 mud-palette-background">
+    <MudTextField @bind-Value="TextValue"
+                  id="@inputId"
+                  OnAdornmentClick="HandleAdornmentClicked"
+                  OnKeyUp="HandleTextFieldChange"
+                  Label="Enter Email Address..."
+                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Adornment="Adornment.End"
+                  AdornmentColor="Color.Primary"
+                  AdornmentIcon="@Icons.Material.Filled.Search"></MudTextField>
+</MudPaper>
+
+
+@code {
+    [Parameter]
+    public List<UserToContactDTO> Users { get; set; }
+    [Parameter]
+    public EventCallback<string> FilterUsersChanged { get; set; }
+
+    const string inputId = "searchUserInput";
+
+    private string TextValue;
+
+    private async Task HandleTextFieldChange(KeyboardEventArgs args)
+    {
+        var searchText = await JsRuntime.InvokeAsync<string>("getInputValue", inputId);
+            await FilterUsersChanged.InvokeAsync(searchText??"");
+    }
+    private async Task HandleAdornmentClicked(MouseEventArgs args)
+    {
+        await FilterUsersChanged.InvokeAsync(TextValue??"");
+        
+    }
+   
+}

@@ -1,0 +1,135 @@
+﻿@page "/login"
+@layout LoginLayout
+
+<style>
+  
+
+    .rounded {
+        border-radius: 25px !important;
+    }
+
+    .loadingCard{
+        height:372px;
+    }
+</style>
+<EditForm Model="@loginCredentials" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudContainer Class=" d-flex justify-center align-center h100">
+        <MudGrid Justify="Justify.Center">
+            <MudItem xs="12" sm="6">
+                <MudCard>
+                    @if (!_isLoading)
+                    {
+                        <MudCardHeader Class="d-flex justify-center">
+                            <MudText Typo="Typo.h4" Align="Align.Center">Login</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudTextField Label="Email"
+                                          @bind-Value="@loginCredentials.Email"
+                                          For="@(() => loginCredentials.Email)"
+                                          Variant="Variant.Outlined" />
+                            <br />
+
+                            <MudTextField InputType="@_passwordInput"
+                                          AdornmentIcon="@_passwordInputIcon"
+                                          OnAdornmentClick="PasswordIconClicked"
+                                          Adornment="Adornment.End"
+                                          Label="Password" Class="mt-3"
+                                          @bind-Value="@loginCredentials.Password"
+                                          For="@(() => loginCredentials.Password)"
+                                          Variant="Variant.Outlined" />
+                            <br />
+                            <MudText Typo="Typo.body1" Align="Align.Center">you don't have an account. <MudLink Href="/signup" Typo="Typo.body1">SignUp</MudLink></MudText>
+                            <br />
+                            <MudButton FullWidth Class="rounded" ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Login</MudButton>
+                        </MudCardContent>
+
+                            }else
+                            {
+                        <MudCardContent Class="d-flex justify-center align-center loadingCard">
+                                <MudStack Class="align-center">
+                                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                <MudText Typo="Typo.body1">Login ... </MudText>
+                                </MudStack>
+                            </MudCardContent>
+                            }
+
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudContainer>
+    </EditForm>
+
+
+                        @code {
+        private LoginCredentialsDTO loginCredentials = new LoginCredentialsDTO();
+
+
+        private LoginCredentialsDTO model = new()
+        {
+            Email = "user3@example.com",
+            Password = "Password123"
+        };
+        private bool _isLoading = false;
+        bool isShow = false;
+        InputType _passwordInput = InputType.Password;
+        string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+        void PasswordIconClicked()
+        {
+            @if (isShow)
+            {
+                isShow = false;
+                _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+                _passwordInput = InputType.Password;
+            }
+            else
+            {
+                isShow = true;
+                _passwordInputIcon = Icons.Material.Filled.Visibility;
+                _passwordInput = InputType.Text;
+        }
+    }
+    private async Task OnValidSubmit(EditContext editContext)
+    {
+        _isLoading = true;
+        StateHasChanged();
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync<LoginCredentialsDTO>(AppConfig.LOGIN_PATH, loginCredentials);
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK:
+                    Snackbar.Add("The login completed successfuly.", Severity.Success);
+                    var tokenData = await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
+                    await TokenManager.StoreTokens(tokenData);
+                    await AuthStateProvider.GetAuthenticationStateAsync();
+                    Navigation.NavigateTo("/");
+                    break;
+                case HttpStatusCode.NotFound:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                case HttpStatusCode.Unauthorized:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                case HttpStatusCode.BadRequest:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                default:
+                    Snackbar.Add("An Error Occured while trying to login you.", Severity.Error);
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            Snackbar.Add("An Error Occured while trying to login you.", Severity.Error);
+        }
+            
+        _isLoading = false;
+        StateHasChanged();
+        }
+}

@@ -1,0 +1,18 @@
+﻿
+                @if (string.IsNullOrEmpty(ImagePath))
+                {
+                    <MudAvatar Color="Color.Tertiary" Size="@Size">@FirstName[0]</MudAvatar>
+                }
+                else
+                {
+                <MudAvatar Variant="Variant.Text" Size="@Size" Image="@($"{AppConfig.BASE_URL}{ImagePath}")" />
+                }
+@code
+{
+    [Parameter]
+    public string ImagePath { get; set; } = "";
+    [Parameter]
+    public string FirstName { get; set; } = "";
+    [Parameter]
+    public Size Size { get; set; } = Size.Large ;
+}

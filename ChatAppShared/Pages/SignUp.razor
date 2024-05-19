@@ -1,0 +1,228 @@
+﻿@page "/signup"
+@using Microsoft.AspNetCore.Http
+@layout LoginLayout
+
+<style>
+    .h100 {
+        height: 100vh;
+    }
+
+    .rounded {
+        border-radius: 25px !important;
+    }
+
+    .loadingCard {
+        height: 372px;
+    }
+
+    .avatar-image {
+        width: 100px;
+        height: 100px;
+        border-radius: 50px;
+    }
+
+    @@media (max-width:960px) {
+        .h100 {
+            min-height: 130vh;
+        }
+    }
+
+</style>
+<MudForm Model="@user" @ref="@_form">
+    <MudContainer Class=" d-flex justify-center align-center h100 overflow-scroll no-scrollbar">
+        <MudGrid Justify="Justify.Center" Class="">
+            <MudItem xs="12" sm="10">
+                <MudCard>
+                    @if (!_isLoading)
+                    {
+                        <MudCardHeader Class="d-flex justify-center">
+                            <MudText Typo="Typo.h4" Align="Align.Center">SignUp</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField Label="First Name"
+                                                  @bind-Value="@user.FirstName"
+                                                  For="@(() => user.FirstName)"
+                                                  Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField Label="Last Name"
+                                                  @bind-Value="@user.LastName"
+                                                  For="@(() => user.LastName)"
+                                                  Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField Label="Email"
+                                                  @bind-Value="@user.Email"
+                                                  For="@(() => user.Email)"
+                                                  Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField InputType="@_passwordInput"
+                                                  AdornmentIcon="@_passwordInputIcon"
+                                                  OnAdornmentClick="PasswordIconClicked"
+                                                  Adornment="Adornment.End"
+                                                  Label="Password" Class="mt-3"
+                                                  @bind-Value="@user.Password"
+                                                  For="@(() => user.Password)"
+                                                  Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="6" Class="d-flex justify-center align-center">
+                                    <MudFileUpload Class="d-flex justify-center align-center" Accept=".png, .jpg, .jpeg" T="IBrowserFile" FilesChanged="SelectedFile">
+                                        <ButtonTemplate>
+                                            <MudStack Justify="Justify.Center" Row Class="flex-wrap gap-10">
+                                                <MudButton HtmlTag="label"
+                                                           Variant="Variant.Filled"
+                                                           Color="Color.Primary"
+                                                           StartIcon="@Icons.Material.Filled.CloudUpload"
+                                                           for="@context">
+                                                    Choose file
+                                                </MudButton>
+                                                @if (_imageBase64 != null)
+                                                {
+                                                    <MudButton OnClick="ClearAsync"
+                                                               Variant="Variant.Filled"
+                                                               Color="Color.Error"
+                                                               StartIcon="@Icons.Material.Filled.Clear">
+                                                        Clear File
+                                                    </MudButton>
+                                                }
+                                            </MudStack>
+                                        </ButtonTemplate>
+                                    </MudFileUpload>
+
+                                </MudItem>
+                                <MudItem xs="12" md="6" Class="d-flex justify-center align-center">
+                                    <MudImage Src="@(_imageBase64 != null?$"data:image;base64,{_imageBase64}":"_content/ChatAppShared/images/user-avatar.png")" class="avatar-image" alt="Avatar Image" />
+                                </MudItem>
+                                <MudItem xs="12" md="8">
+                                    <MudText Typo="Typo.body1" Align="Align.Center">you already have an account. <MudLink Href="/login" Typo="Typo.body1">Login</MudLink></MudText>
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudButton FullWidth Class="rounded" OnClick="@(async () => await Submit())" Variant="Variant.Filled" Color="Color.Primary">SignUp</MudButton>
+
+                                </MudItem>
+                            </MudGrid>
+
+                        </MudCardContent>
+
+                    }
+                    else
+                    {
+                        <MudCardContent Class="d-flex justify-center align-center loadingCard">
+                            <MudStack Class="align-center">
+                                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                <MudText Typo="Typo.body1">SignUp ... </MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    }
+
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+</MudForm>
+
+
+@code {
+
+    UserDTO user = new UserDTO();
+    bool _isLoading = false;
+    MudForm _form;
+    bool _isShow = false;
+    InputType _passwordInput = InputType.Password;
+    string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+    IBrowserFile _file;
+    string _imageBase64;
+
+    void PasswordIconClicked()
+    {
+        @if (_isShow)
+        {
+            _isShow = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInput = InputType.Password;
+        }
+        else
+        {
+            _isShow = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInput = InputType.Text;
+        }
+    }
+    private async Task SelectedFile(IBrowserFile file)
+    {
+        this._file = file;
+        var imageBytes = new byte[_file.Size];
+        await _file.OpenReadStream().ReadAsync(imageBytes);
+        _imageBase64 = Convert.ToBase64String(imageBytes);
+    }
+    private async Task ClearAsync()
+    {
+        this._file = null;
+        _imageBase64 = null;
+    }
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (!_form.IsValid)
+        {
+            return;
+        }
+        _isLoading = true;
+        StateHasChanged();
+        try
+        {
+            var formData = new MultipartFormDataContent();
+            formData.Add(new StringContent(user.FirstName), "FirstName");
+            formData.Add(new StringContent(user.LastName), "LastName");
+            formData.Add(new StringContent(user.Email), "Email");
+            formData.Add(new StringContent(user.Password), "Password");
+            if (_file!=null)
+            {
+                formData.Add(new StreamContent(_file.OpenReadStream(AppConfig.MAX_FILE_SIZE)), "AvatarImage", _file.Name);
+                ClearAsync();
+            }
+            var response = await httpClient.PostAsync(AppConfig.SIGNUP_PATH, formData);
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK:
+                    Snackbar.Add("The signup completed successfuly.", Severity.Success);
+                    var tokenData = await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
+                    await TokenManager.StoreTokens(tokenData);
+                    await AuthStateProvider.GetAuthenticationStateAsync();
+                    Navigation.NavigateTo("/");
+                    break;
+                case HttpStatusCode.NotFound:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                case HttpStatusCode.Unauthorized:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                case HttpStatusCode.BadRequest:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                default:
+                    Snackbar.Add("An Error Occured while trying to signup you.", Severity.Error);
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            Snackbar.Add("An Error Occured while trying to signup you.", Severity.Error);
+        }
+
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+
+
+
+
+}

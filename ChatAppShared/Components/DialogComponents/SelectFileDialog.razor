@@ -1,0 +1,164 @@
+﻿@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        @if (!_isSendingFile)
+        {
+
+            <MudStack Justify="Justify.Center">
+                <MudFileUpload Class="d-flex justify-center align-center" T="IBrowserFile" FilesChanged="SelectedFile">
+                    <ButtonTemplate>
+                        <MudButton HtmlTag="label"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                                   for="@context">
+                            Choose file
+                        </MudButton>
+                    </ButtonTemplate>
+                </MudFileUpload>
+                @if (_file != null)
+                {
+                    <MudList>
+                        <MudListItem Icon="@Icons.Material.Filled.AttachFile" IconColor="Color.Primary" @key="@_file">
+                            @_file.Name <code>(@_file.Size.ToMegabytes())</code>
+                        </MudListItem>
+                    </MudList>
+                }
+                @if (_isThereAnyError)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Error">@_errorMessage</MudText>
+                }
+            </MudStack>
+        }
+        else
+        {
+            <MudContainer Class="d-flex flex-column align-center gap-10 justify-center pa-16">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary"></MudProgressCircular>
+                <MudText Typo="Typo.body2"> Sending file please wait ...</MudText>
+            </MudContainer>
+
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="Cancel">Cancel</MudButton>
+        <MudIconButton Icon="@Icons.Material.Filled.Send" OnClick="Submit" Color="Color.Primary" Edge="Edge.End" />
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    protected Task<AuthenticationState> AuthStat { get; set; }
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    bool _isSendingFile = false;
+    bool _isThereAnyError = false;
+    string _errorMessage = "";
+    IBrowserFile _file;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentContactServices.OnChange += StateHasChanged;
+
+
+
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    private void SelectedFile(IBrowserFile file)
+    {
+        this._file = file;
+        if (_file == null)
+        {
+            _errorMessage = "Please select a file.";
+            _isThereAnyError = true;
+            return;
+        }
+        if (_file.Size > AppConfig.MAX_FILE_SIZE)
+        {
+            _errorMessage = "File size exceeds the maximum allowed size.";
+            _isThereAnyError = true;
+            _file = null;
+            return;
+        }
+        _isThereAnyError = false;
+    }
+
+    private async Task Submit()
+    {
+        if (_file == null)
+        {
+            _errorMessage = "Please select a file.";
+            _isThereAnyError = true;
+            return;
+        }
+        var conversationId = CurrentContactServices.CurrentContact?.ConversationId ?? "";
+        _isThereAnyError = false;
+        _isSendingFile = true;
+        var formData = new MultipartFormDataContent();
+        formData.Add(new StringContent((await AuthStat).User.GetClaim(ClaimTypes.NameIdentifier)), "SenderId");
+        formData.Add(new StringContent(conversationId), "ConversationId");
+        formData.Add(new StringContent(((int)MapFileTypeToMessageType(_file.Name)).ToString()), "Type");
+        formData.Add(new StreamContent(_file.OpenReadStream(AppConfig.MAX_FILE_SIZE)), "FileContent", _file.Name);
+         
+        var response = await httpClient.PostAsync(AppConfig.UPLOAD_FILE_PATH, formData);
+
+        if (response.IsSuccessStatusCode)
+        {
+           await ChatNotificationServices.NotifyUser();
+            _isSendingFile = false;
+            var message = await response.Content.ReadFromJsonAsync<MessageDTO>();
+            if (message is not null)
+            {
+             ChatNotificationServices.Add(message);
+            }
+            await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            _errorMessage = "Error uploading file.";
+            _isThereAnyError = true;
+            _isSendingFile = false;
+        }
+    }
+
+    private MessageType MapFileTypeToMessageType(string fileName)
+    {
+        var fileExtension = "." + fileName.ToLower().Split('.').Last();
+
+        switch (fileExtension)
+        {
+
+            case ".jpg":
+            case ".jpeg":
+            case ".png":
+            case ".gif":
+            case ".bmp":
+                return MessageType.Image;
+
+            case ".mp3":
+            case ".wav":
+            case ".ogg":
+            case ".aac":
+                return MessageType.Audio;
+
+            case ".mp4":
+            case ".avi":
+            case ".mov":
+            case ".wmv":
+                return MessageType.Video;
+
+            default:
+                return MessageType.Other;
+        }
+    }
+
+
+    public void Dispose()
+    {
+        CurrentContactServices.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,77 @@
+﻿
+@implements IDisposable
+@if (true)
+{
+    
+}
+<MudPaper Width="100%" Height="77px" Class="py-4 px-4 absolute mud-palette-background d-flex" Style="left:0px;top:0px;z-index:999">
+
+    <MudBadge Color="@(AppUtils.GetBadgeColor(ChatNotificationServices.GetUserConnectivity(CurrentContactServices.CurrentContact?.ContactUserId??"")))" Overlap="true" Bordered="true">
+        <CustomAvatar ImagePath="@CurrentContactServices.CurrentContact?.ContactAvatar" FirstName="@CurrentContactServices.CurrentContact?.FirstName" Size="Size.Large" />
+    </MudBadge>
+
+    <MudContainer Class="d-flex flex-column">
+        <MudText Typo="Typo.subtitle1" Style="font-weight:bold">@CurrentContactServices.CurrentContact?.FirstName @CurrentContactServices.CurrentContact?.LastName</MudText>
+        <MudText Typo="Typo.subtitle2" style="opacity:0.5">@AppUtils.GetConnectionStatus(ChatNotificationServices.GetUserConnectivity(CurrentContactServices.CurrentContact?.ContactUserId??""))</MudText>
+    </MudContainer>
+    <MudSpacer />
+    <MudStack Row Class="align-center">
+    <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+        <MudMenuItem OnClick="RemoveConversationCliked">Remove Conversation</MudMenuItem>
+    </MudMenu>
+        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="CloseChatCliked"></MudIconButton>
+    </MudStack>
+
+</MudPaper>
+@code {
+    [CascadingParameter]
+    public DisplayState _state { get; set; }
+    [CascadingParameter]
+    public Action<DisplayState> HandleDisplayStateChange { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ContactsServices.OnChange += StateHasChanged;
+        DisplayServices.OnChange += StateHasChanged;
+        CurrentContactServices.OnChange += StateHasChanged;
+        ChatNotificationServices.OnChange += StateHasChanged;
+    }
+
+    private void CloseChatCliked()
+    {
+        if (DisplayServices.DisplayState != DisplayState.BothState)
+        {
+            DisplayServices.Notify(DisplayState.ContactState);
+        }
+        CurrentContactServices.Notify(null);
+
+
+    }
+    private async Task RemoveConversationCliked()
+    {
+        var parameters = new DialogParameters<NotificationDialog>();
+        parameters.Add(x => x.ContentText, "Do you really want to delete this onversation? This process cannot be undone.");
+        parameters.Add(x => x.ButtonText, "Delete");
+        parameters.Add(x => x.Color, Color.Error);
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialog = DialogService.Show<NotificationDialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var conversationId = CurrentContactServices.CurrentContact?.ConversationId;
+            CloseChatCliked();
+            await httpClient.DeleteAsync($"{AppConfig.DELETE_CONVERSATION_PATH}/{conversationId}");
+            await ContactsServices.Get();
+        }
+        
+    }
+    public void Dispose()
+    {
+        ContactsServices.OnChange -= StateHasChanged;
+        CurrentContactServices.OnChange -= StateHasChanged;
+        DisplayServices.OnChange -= StateHasChanged;
+        ChatNotificationServices.OnChange -= StateHasChanged;
+
+    }
+}

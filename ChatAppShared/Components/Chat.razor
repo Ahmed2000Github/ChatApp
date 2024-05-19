@@ -1,0 +1,150 @@
+﻿@implements IDisposable
+
+<style>
+    .chat-list-constraints {
+        max-height: calc(100vh - 260px);
+        min-height: calc(100vh - 260px);
+        margin-top: 70px;
+    }
+
+    .no-contact-constraints {
+        max-height: calc(100vh - 190px);
+        min-height: calc(100vh - 190px);
+        margin-top: 80px;
+    }
+    .hr-position{
+        top: 50%;
+        z-index:-99
+    }
+</style>
+
+@if (CurrentContactServices.CurrentContact != null)
+{
+    @if (ChatNotificationServices.LoadingStatus == LoadingStatus.LoadingSucceed)
+    {
+        <AuthorizeView>
+            <Authorized>
+                @if (ChatNotificationServices.Messages?.Count > 0)
+                {
+                    <MudGrid id="scrollableDiv" Spacing="1" Justify="Justify.Center" Class=" px-0 overflow-y-scroll overflow-x-hidden no-scrollbar chat-list-constraints">
+                        @if (ChatNotificationServices.Messages?.Count > 0)
+                        {
+                            @foreach (var message in ChatNotificationServices.Messages)
+                            {
+                                @if (ShouldDisplayDateLabel(message.SentDate))
+                                {
+                                    
+                                    <MudItem xs="12" Class="d-flex justify-center align-center relative">
+                                        <MudDivider Absolute Class="hr-position"></MudDivider>
+                                        <MudChip Style=" background-color: #d7dddd;">@message.SentDate.ToString("ddd dd-MM-yyyy")</MudChip>
+                                    </MudItem>
+                                    _previousDate = message.SentDate;
+                                }
+                                @if (@context.User.GetClaim(ClaimTypes.NameIdentifier) == message.SenderId)
+                                {
+                                    <CurrentSenderMessage message="message" />
+                                }
+                                else
+                                {
+                                    <ContactSenderMessage message="message"/>
+                                }
+                            }
+                        }
+                        @*   @if (_sendingMessage)
+            {
+            <MudSpacer />
+            <MudItem xs="12" Class="d-flex justify-center flex-column pa-2 gap-1 ma-4">
+            <MudContainer Class="d-flex align-end justify-end">
+            <MudPaper Class="currentSender-background pa-2" Style="opacity:0.5" Elevation="0">
+            <MudText Typo="Typo.body1" Style="color:white" Class="message-animation">Sending message ...</MudText>
+            </MudPaper>
+            <div class="current-triangle" Style="opacity:0.5"></div>
+            </MudContainer>
+            </MudItem>
+            } *@
+
+                    </MudGrid>
+                }
+                else
+                {
+                    <MudContainer Class="py-4 px-0 d-flex flex-column justify-center align-center no-contact-constraints">
+                        <MudImage Src="_content/ChatAppShared/images/start-chat.png" Height="150" Width="150" />
+                        <MudText Typo="Typo.body1"> Strat new conversation.</MudText>
+                    </MudContainer>
+                }
+
+            </Authorized>
+        </AuthorizeView>
+    }
+    else if (ChatNotificationServices.LoadingStatus == LoadingStatus.LoadingInProgress)
+    {
+        <MudPaper Elevation="0" Height="100%" Class="d-flex justify-center align-center">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </MudPaper>
+    }
+    else
+    {
+        <MudContainer Class="py-4 px-0 d-flex flex-column justify-center align-center no-contact-constraints">
+            <MudImage Src="_content/ChatAppShared/images/error.png" Height="150" Width="150" />
+            <MudText Typo="Typo.body1"> An error occured try later.</MudText>
+            <br />
+            <MudButton Variant="Variant.Text" Color="Color.Primary" @onclick="CloseCliked"> Close</MudButton>
+        </MudContainer>
+    }
+
+}
+else
+{
+    <MudContainer Class="py-4 px-0 d-flex flex-column justify-center align-center no-contact-constraints">
+        <MudImage Src="_content/ChatAppShared/images/no-conversation.png" Height="150" Width="150" />
+        <MudText Typo="Typo.body1"> No contact selected</MudText>
+    </MudContainer>
+}
+
+
+@code {
+
+    [CascadingParameter]
+    public DisplayState _state { get; set; }
+    [CascadingParameter]
+    public Action<DisplayState> HandleDisplayStateChange { get; set; }
+    [CascadingParameter] protected Task<AuthenticationState> AuthStat { get; set; }
+
+    DateTime _previousDate = DateTime.MinValue;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentContactServices.OnChange += StateHasChanged;
+        ChatNotificationServices.OnChange += StateHasChanged;
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
+        }
+    }
+
+    private bool ShouldDisplayDateLabel(DateTime currentDate)
+    {
+        return currentDate.Date != _previousDate.Date;
+    }
+
+    private void CloseCliked()
+    {
+        if (_state != DisplayState.BothState)
+        {
+            HandleDisplayStateChange(DisplayState.ContactState);
+        }
+
+    }
+
+    public void Dispose()
+    {
+        CurrentContactServices.OnChange -= StateHasChanged;
+        ChatNotificationServices.OnChange -= StateHasChanged;
+    }
+}

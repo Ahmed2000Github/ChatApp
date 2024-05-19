@@ -1,0 +1,15 @@
+﻿
+
+<MudStack Row>
+    <CustomAvatar ImagePath="@User.Avatar" FirstName="@User.FirstName" Size="Size.Large"/>
+    <MudStack Class="gap-0">
+        <MudText Typo="Typo.subtitle1" Class="pl-4" Style="font-weight:bold">@User.FirstName @User.LastName</MudText>
+        <MudText Typo="Typo.subtitle2" Class="pl-4">@User.Email</MudText>
+    </MudStack>
+</MudStack>
+
+@code {
+    [Parameter]
+    public UserToContactDTO User { get; set; }
+
+}

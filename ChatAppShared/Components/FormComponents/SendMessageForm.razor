@@ -1,0 +1,96 @@
+﻿
+<MudPaper Width="100%" Height="77px" Class="pa-4 absolute mud-palette-background d-flex" Style="left:0px;bottom:0px" Elevation="0">
+    <MudGrid>
+        <MudItem xs="1">
+            <MudIconButton Icon="@Icons.Material.Filled.PermMedia" Color="Color.Primary" Edge="Edge.End" OnClick="SelecMediaCliked" />
+        </MudItem>
+        <MudItem xs="9">
+            <MudTextField @bind-Value="TextValue" Label="Type something" Lines="2" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
+        </MudItem>
+        <MudItem xs="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Send" OnClick="SubmitMessage" Color="Color.Primary" Edge="Edge.End" />
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+@code {
+    [CascadingParameter]
+    protected Task<AuthenticationState> AuthStat { get; set; }
+    private string TextValue;
+    private async Task SelecMediaCliked()
+    {
+        var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                FullWidth = true,
+            };
+        await DialogService.Show<SelectFileDialog>("Send a file", options).Result;
+
+    }
+    private async Task SubmitMessage()
+    {
+        if (string.IsNullOrEmpty(TextValue))
+        {
+            return;
+        }
+        var conversationId = CurrentContactServices.CurrentContact?.ConversationId;
+        // ChatNotificationServices.Add(
+        //     new MessageDTO()
+        //         {
+        //             Id = Guid.NewGuid().ToString(),
+        //             Content = TextValue,
+        //             SentDate = DateTime.Now,
+        //             ConversationId = conversationId,
+        //             SenderId = (await AuthStat).User.GetClaim(ClaimTypes.NameIdentifier),
+        //             Type = MessageType.Text
+        //         }
+        // );
+        var message = new MessageFormDTO()
+            {
+                Content = TextValue,
+                ConversationId = conversationId,
+                SenderId = (await AuthStat).User.GetClaim(ClaimTypes.NameIdentifier),
+                Type = MessageType.Text
+            };
+
+        await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync<MessageFormDTO>(AppConfig.ADD_MESSAGE_PATH, message);
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK:
+                    TextValue = "";
+                    StateHasChanged();
+                    await ChatNotificationServices.NotifyUser();
+                    var messageRes = await response.Content.ReadFromJsonAsync<MessageDTO>();
+                    if (messageRes is not null)
+                    {
+                        ChatNotificationServices.Add(messageRes);
+                    }
+                    await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
+                    break;
+                case HttpStatusCode.NotFound:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                case HttpStatusCode.Unauthorized:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                case HttpStatusCode.BadRequest:
+
+                    Snackbar.Add((await response.Content.ReadAsStringAsync()), Severity.Error);
+                    break;
+                default:
+                    Snackbar.Add("An Error Occured while trying to sending your message.", Severity.Error);
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            Snackbar.Add("An Error Occured while trying to sending your message.", Severity.Error);
+        }
+        StateHasChanged();
+    }
+}

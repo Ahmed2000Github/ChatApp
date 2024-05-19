@@ -1,0 +1,33 @@
+﻿
+
+<MudImage Src="@($"{AppConfig.BASE_URL}{Src}")" ObjectFit="ObjectFit.ScaleDown" Width="@_size.width" Height="@_size.height" Elevation="0" Class="rounded-lg" />
+   
+@code {
+    [Parameter]
+    public string Src { get; set; }
+    [Parameter]
+    public string ImageName { get; set; }
+
+    private (int width, int height) _size = (332,250);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointListener.WindowChangeListener(AdjustImageSize);
+        }
+    }
+    private void AdjustImageSize(Breakpoint breakpoint)
+    {
+        if (breakpoint == Breakpoint.Xs)
+        {
+            _size = (232, 200);
+            StateHasChanged();
+        }
+        else
+        {
+            _size = (332, 250);
+            StateHasChanged();
+        }
+    }
+}
