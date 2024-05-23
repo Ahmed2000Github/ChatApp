@@ -1,5 +1,12 @@
 ﻿@implements IDisposable
 
+<style>
+    @@media (max-width:600px){
+        .mud-dialog-width-full {
+            width:96%;
+        }
+    }
+</style>
 <MudDialog>
     <DialogContent>
         @if (!_isSendingFile)
@@ -34,15 +41,24 @@
         else
         {
             <MudContainer Class="d-flex flex-column align-center gap-10 justify-center pa-16">
-                <MudProgressCircular Indeterminate="true" Color="Color.Primary"></MudProgressCircular>
-                <MudText Typo="Typo.body2"> Sending file please wait ...</MudText>
+                <MudProgressCircular Size="Size.Large" Indeterminate="_uploadProgress==100" Value="_uploadProgress" Color="Color.Primary"></MudProgressCircular>
+                @if (_uploadProgress != 100)
+                {
+                    <MudText Typo="Typo.body2"> @_uploadProgress%</MudText>
+                    <MudText Typo="Typo.body2"> Sending file please wait ... </MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2"> Terminating ... </MudText>
+
+                }
             </MudContainer>
 
         }
     </DialogContent>
     <DialogActions>
         <MudButton Color="Color.Error" OnClick="Cancel">Cancel</MudButton>
-        <MudIconButton Icon="@Icons.Material.Filled.Send" OnClick="Submit" Color="Color.Primary" Edge="Edge.End" />
+        <MudIconButton Icon="@Icons.Material.Filled.Send" OnClick="UploadFile" Color="Color.Primary" Edge="Edge.End" />
     </DialogActions>
 </MudDialog>
 
@@ -54,18 +70,21 @@
 
     bool _isSendingFile = false;
     bool _isThereAnyError = false;
+    int _uploadProgress;
+    CancellationTokenSource _cancellationTokenSource;
     string _errorMessage = "";
     IBrowserFile _file;
 
     protected override async Task OnInitializedAsync()
     {
         CurrentContactServices.OnChange += StateHasChanged;
-
-
-
     }
 
-    void Cancel() => MudDialog.Cancel();
+    void Cancel()
+    {
+        _cancellationTokenSource?.Cancel();
+        MudDialog.Cancel();
+    }
 
     private void SelectedFile(IBrowserFile file)
     {
@@ -102,24 +121,24 @@
         formData.Add(new StringContent(conversationId), "ConversationId");
         formData.Add(new StringContent(((int)MapFileTypeToMessageType(_file.Name)).ToString()), "Type");
         formData.Add(new StreamContent(_file.OpenReadStream(AppConfig.MAX_FILE_SIZE)), "FileContent", _file.Name);
-         
+
         var response = await httpClient.PostAsync(AppConfig.UPLOAD_FILE_PATH, formData);
 
         if (response.IsSuccessStatusCode)
         {
-           await ChatNotificationServices.NotifyUser();
+            await ChatNotificationServices.NotifyUser();
             _isSendingFile = false;
             var message = await response.Content.ReadFromJsonAsync<MessageDTO>();
             if (message is not null)
             {
-             ChatNotificationServices.Add(message);
+                ChatNotificationServices.Add(message);
             }
             await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
             MudDialog.Close(DialogResult.Ok(true));
         }
         else
         {
-            _errorMessage = "Error uploading file.";
+            _errorMessage = "Error uploading file failed.";
             _isThereAnyError = true;
             _isSendingFile = false;
         }
@@ -156,6 +175,63 @@
         }
     }
 
+    private async Task UploadFile()
+    {
+        if (_isSendingFile)
+        {
+            return;
+        }
+        if (_file == null)
+        {
+            _errorMessage = "Please select a file.";
+            _isThereAnyError = true;
+            return;
+        }
+        var conversationId = CurrentContactServices.CurrentContact?.ConversationId ?? "";
+        _isThereAnyError = false;
+        _isSendingFile = true;
+
+        var progress = async (int progress) =>
+        {
+            _uploadProgress = progress;
+            await InvokeAsync(StateHasChanged);
+        };
+        _cancellationTokenSource = new CancellationTokenSource();
+        var token = _cancellationTokenSource.Token;
+        var content = new MultipartFormDataContent();
+        content.Add(new StringContent((await AuthStat).User.GetClaim(ClaimTypes.NameIdentifier)), "SenderId");
+        content.Add(new StringContent(conversationId), "ConversationId");
+        content.Add(new StringContent(((int)MapFileTypeToMessageType(_file.Name)).ToString()), "Type");
+        using (var streamContent = new StreamContent(_file.OpenReadStream(AppConfig.MAX_FILE_SIZE)))
+        {
+            content.Add(streamContent, "FileContent", _file.Name);
+            var progressContent = new ProgressableStreamContent(content, progress, token);
+
+            var response = await httpClient.PostAsync(AppConfig.UPLOAD_FILE_PATH, progressContent);
+            response.EnsureSuccessStatusCode();
+
+            if (response.IsSuccessStatusCode)
+            {
+                await ChatNotificationServices.NotifyUser();
+                _isSendingFile = false;
+                var message = await response.Content.ReadFromJsonAsync<MessageDTO>();
+                if (message is not null)
+                {
+                    ChatNotificationServices.Add(message);
+                }
+                await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                _errorMessage = "Error uploading file failed.";
+                _isThereAnyError = true;
+                _isSendingFile = false;
+            }
+        }
+
+        _uploadProgress = 0;
+    }
 
     public void Dispose()
     {

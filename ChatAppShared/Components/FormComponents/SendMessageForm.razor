@@ -20,7 +20,7 @@
     {
         var options = new DialogOptions
             {
-                CloseOnEscapeKey = true,
+                DisableBackdropClick = true,
                 FullWidth = true,
             };
         await DialogService.Show<SelectFileDialog>("Send a file", options).Result;
