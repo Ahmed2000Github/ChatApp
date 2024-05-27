@@ -1,4 +1,5 @@
-# SignalR Real-Time Chat Application
+ <img src="https://github.com/Ahmed2000Github/ChatApp/blob/master/ChatAppShared/wwwroot/favicon.png?raw=true" width="50" title="chat app"> **SignalR Real-Time Chat Application**
+ 
 
 This project is a simple real-time chat application built with .NET and SignalR. Users can log in, create conversations with others, share insights, and exchange files.
 
@@ -8,6 +9,14 @@ This project is a simple real-time chat application built with .NET and SignalR.
 - **Real-Time Communication**: Instant messaging with SignalR.
 - **Conversations**: Create and join conversations with other users.
 - **File Sharing**: Share files seamlessly within the chat.
+
+## Video Demo
+
+ Click the image to see the demonstration video
+
+ 
+[<img src="https://github.com/Ahmed2000Github/ChatApp/assets/93035933/fdd90d17-b43b-4114-8ca3-7147271b0ed1" width="300" title="chat app video"> ](https://raw.githubusercontent.com/Ahmed2000Github/ChatApp/master/ChatApp-demo.mp4)
+
 
 ## Technologies Used
 
