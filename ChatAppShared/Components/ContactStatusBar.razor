@@ -1,9 +1,17 @@
 ﻿
 @implements IDisposable
-@if (true)
-{
-    
-}
+
+<style>
+    .responsive-title{
+        font-size:0.9rem;
+        font-weight:bold;
+    }
+    @@media(max-width:600px){
+        .responsive-title {
+            font-size: 0.7rem
+        }
+    }
+</style>
 <MudPaper Width="100%" Height="77px" Class="py-4 px-4 absolute mud-palette-background d-flex" Style="left:0px;top:0px;z-index:999">
 
     <MudBadge Color="@(AppUtils.GetBadgeColor(ChatNotificationServices.GetUserConnectivity(CurrentContactServices.CurrentContact?.ContactUserId??"")))" Overlap="true" Bordered="true">
@@ -11,7 +19,7 @@
     </MudBadge>
 
     <MudContainer Class="d-flex flex-column">
-        <MudText Typo="Typo.subtitle1" Style="font-weight:bold">@CurrentContactServices.CurrentContact?.FirstName @CurrentContactServices.CurrentContact?.LastName</MudText>
+        <MudText Typo="Typo.subtitle1" Class="responsive-title">@CurrentContactServices.CurrentContact?.FirstName @CurrentContactServices.CurrentContact?.LastName</MudText>
         <MudText Typo="Typo.subtitle2" style="opacity:0.5">@AppUtils.GetConnectionStatus(ChatNotificationServices.GetUserConnectivity(CurrentContactServices.CurrentContact?.ContactUserId??""))</MudText>
     </MudContainer>
     <MudSpacer />

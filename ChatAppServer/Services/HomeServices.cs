@@ -96,34 +96,23 @@ namespace ChatAppServer.Services
             return contactsDTO;
         }
 
+        // This method is for retrive a message by its Id
+        public async Task<MessageDTO> GetMessageById(string messageId)
+        {
+            var message = _messages.entity.Where(x => x.Id.ToString() == messageId).FirstOrDefault();
+            return  _mapper.Map<MessageDTO>(message);
+        }
+
         // This method is for retrive a list of all conversation's messages 
         public async Task<IEnumerable<MessageDTO>> GetAllUserMessagesInConversation(string userId, string conversationId)
         {
             var conversation = _conversations.entity.GetById(new Guid(conversationId));
-            if (conversation is not null && conversation.IsHiddenFor == userId)
+            if (conversation is not null)
             {
-                var messages = _messages.entity.Where(x => x.ConversationId.ToString() == conversationId && x.IsHiddenFor == "");
+                var messages = _messages.entity.Where(x => x.ConversationId.ToString() == conversationId && !x.IsReaded && x.SenderId != userId);
                 foreach (var message in messages)
                 {
-                    if (!message.IsReaded && message.SenderId != userId)
-                    {
                         message.IsReaded = true;
-                        _messages.entity.Update(message);
-                        _messages.save();
-                    }
-                }
-                messages = _messages.entity.Where(x => x.ConversationId.ToString() == conversationId).OrderBy(m => m.SentDate);
-                return messages.Select(message => _mapper.Map<MessageDTO>(message));
-            }
-            else if (conversation is not null)
-            {
-                var messages = _messages.entity.Where(x => x.ConversationId.ToString() == conversationId);
-                foreach (var message in messages)
-                {
-                    if (!message.IsReaded && message.SenderId != userId)
-                    {
-                        message.IsReaded = true;
-                    }
                 }
                 _messages.entity.UpdateRange(messages.ToArray());
                 _messages.save();
@@ -259,12 +248,17 @@ namespace ChatAppServer.Services
                 return (null, null, $"Internal server error: {ex.Message}");
             }
         }
-        public async Task<bool> UpdateMessageToReaded(string messageId)
+        public async Task<bool> UpdateMessagesToReaded(string userId,string conversationId)
         {
-            await Console.Out.WriteLineAsync("Update message.................");
-            var message = _messages.entity.GetById(new Guid(messageId));
-            message.IsReaded = true;
-            _messages.entity.Update(message);
+            var messages = _messages.entity.Where(x => x.ConversationId.ToString() == conversationId);
+            foreach (var message in messages)
+            {
+                if (!message.IsReaded && message.SenderId != userId)
+                {
+                    message.IsReaded = true;
+                }
+            }
+            _messages.entity.UpdateRange(messages.ToArray());
             _messages.save();
             return true;
         }
@@ -327,7 +321,6 @@ namespace ChatAppServer.Services
         // This method is for deleteing a conversation by its id
         public async Task<string> DeleteConversationById(string userId, string conversationId)
         {
-            Console.WriteLine($"dddddddddddddddddddddddddddddddddddddddddddddddddddd {conversationId}");
 
             var conversation = _conversations.entity.GetById(new Guid(conversationId));
             var otherUserId = _userConversations.entity.Where(u => u.ConversationId.ToString() == conversationId && u.UserId != userId).FirstOrDefault().UserId;

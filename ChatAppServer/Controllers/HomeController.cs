@@ -38,6 +38,12 @@ namespace ChatAppServer.Controllers
             return Ok(await _homeServices.GetAllUserMessagesInConversation(User.FindFirstValue(ClaimTypes.NameIdentifier),conversationId));
         }
 
+        [HttpGet("{messageId}")]
+        public async Task<IActionResult> GetMessageById(string messageId)
+        {
+            return Ok(await _homeServices.GetMessageById(messageId));
+        }
+
         [HttpPost]
         public async Task<IActionResult> AddMessage([FromBody] MessageFormDTO message)
         {
@@ -54,9 +60,9 @@ namespace ChatAppServer.Controllers
             return StatusCode(500, result.internalErrorResult);
         }
         [HttpPut]
-        public async Task<IActionResult> UpdateMessage([FromBody] string messageId)
+        public async Task<IActionResult> UpdateMessages([FromBody] string conversationId)
         {
-            var result = await _homeServices.UpdateMessageToReaded(messageId);
+            var result = await _homeServices.UpdateMessagesToReaded(User.FindFirstValue(ClaimTypes.NameIdentifier), conversationId);
                 return Ok(result);
         }
         [HttpPost]

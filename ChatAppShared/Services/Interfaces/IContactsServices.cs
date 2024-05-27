@@ -12,7 +12,8 @@ namespace ChatAppShared.Services.Interfaces
         public event Action OnChange;
 
         public void Filter(string searchText);
-        public Task Get();
+        public Task Get(bool isFirstTime = false);
+        public Task NotifyReaded(string conversationId);
         public Task Notify();
 
     }

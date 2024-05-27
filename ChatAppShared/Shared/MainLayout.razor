@@ -97,7 +97,7 @@
             DisplayServices.Notify(DisplayState.ContactState);
         }
         CurrentContactServices.Notify(null);
-    } 
+    }
     void OnProfileBackCliked()
     {
         Navigation.NavigateTo("/");
@@ -107,6 +107,13 @@
     // Specify the app theme
     MudTheme MyCustomTheme = new MudTheme()
         {
+            Typography = new Typography()
+            {
+                Subtitle1 = new Subtitle1()
+                {
+                    FontSize = "0.9rem"
+                }
+            },
             Palette = new Palette()
             {
                 Primary = "#482ff7",
@@ -124,7 +131,6 @@
                 ActionDefault = "#000000",
                 TextSecondary = "#00000088",
                 SuccessContrastText = "#000000",
-
             },
             PaletteDark = new Palette()
             {

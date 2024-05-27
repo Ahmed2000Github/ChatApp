@@ -29,6 +29,7 @@
                     <MudGrid id="scrollableDiv" Spacing="1" Justify="Justify.Center" Class=" px-0 overflow-y-scroll overflow-x-hidden no-scrollbar chat-list-constraints">
                         @if (ChatNotificationServices.Messages?.Count > 0)
                         {
+                            _previousDate = DateTime.MinValue;
                             @foreach (var message in ChatNotificationServices.Messages)
                             {
                                 @if (ShouldDisplayDateLabel(message.SentDate))

@@ -46,13 +46,13 @@ namespace ChatAppServer.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task NotifyUser(string userId, string conversationId)
+        public async Task NotifyUser(string userId, MessageDTO message)
         {
             if (userConnections.ContainsKey(userId))
             {
                 foreach (var connectionId in userConnections[userId])
                 {
-                    await Clients.Client(connectionId).SendAsync("ReceiveNotification", conversationId);
+                    await Clients.Client(connectionId).SendAsync("ReceiveNotification", message);
                 }
             }
         }

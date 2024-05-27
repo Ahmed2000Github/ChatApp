@@ -41,28 +41,21 @@ namespace ChatAppShared.Services
         {
             await CreateConnection();
 
-            _hubConnection.On<MessageDTO>("ReceiveMessage", async (message) =>
-            {
-                if (!message.IsReaded && _currentContactServices.CurrentContact?.ContactUserId == message.SenderId)
-                {
-                    httpClient.PutAsJsonAsync<string>($"{AppConfig.UPDATE_READED_MESSAGE_PATH}",message.Id);
-                    message.IsReaded = true;
-                }
-                Messages?.Add(message);
-                await _contactsServices.Notify();
-                OnChange?.Invoke();
-                await _jsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
-            });
 
-            _hubConnection.On<string>("ReceiveNotification", async (conversationId) =>
+            _hubConnection.On<MessageDTO>("ReceiveNotification", async (message) =>
             {
-                if (_currentContactServices.CurrentContact?.ConversationId == conversationId)
+                if (message is not null && _currentContactServices.CurrentContact?.ConversationId == message.ConversationId)
                 {
-                    await Get(conversationId);
+                    Messages.Add(message);
+                    OnChange?.Invoke();
+                    _contactsServices.NotifyReaded(message.ConversationId ?? "");
                     await _jsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
-
                 }
-                _contactsServices.Notify(); 
+                else
+                {
+                 _contactsServices.Notify();
+                }
+
             });
 
             _hubConnection.On<IEnumerable<string>>("OnUsersListChange", (users) =>
@@ -86,7 +79,7 @@ namespace ChatAppShared.Services
         {
             if (OnlineUsers is null)
             {
-               
+
                 return false;
             }
             return OnlineUsers.Contains(userId);
@@ -100,18 +93,19 @@ namespace ChatAppShared.Services
             }
         }
 
-        public void Add(MessageDTO message)
+        public async Task Add(MessageDTO message)
         {
+            await _contactsServices.Notify();
             Messages.Add(message);
             OnChange?.Invoke();
         }
-        public async Task NotifyUser()
+        public async Task NotifyUser(MessageDTO message)
         {
             var userId = _currentContactServices.CurrentContact.ContactUserId ?? "";
-            var conversationId = _currentContactServices.CurrentContact.ConversationId  ?? "";
+            var conversationId = _currentContactServices.CurrentContact.ConversationId ?? "";
             if (_hubConnection is not null && userId != "")
             {
-                await _hubConnection.SendAsync("NotifyUser", userId, conversationId);
+                await _hubConnection.SendAsync("NotifyUser", userId,message);
                 OnChange?.Invoke();
             }
         }
@@ -119,7 +113,7 @@ namespace ChatAppShared.Services
         {
             if (_hubConnection is not null)
             {
-                await _hubConnection.SendAsync("NotifyUser", userId, "");
+                await _hubConnection.SendAsync("NotifyUser", userId, null);
                 OnChange?.Invoke();
             }
         }
@@ -160,5 +154,6 @@ namespace ChatAppShared.Services
                .WithAutomaticReconnect()
                .Build();
         }
+
     }
 }

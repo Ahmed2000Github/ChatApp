@@ -30,26 +30,49 @@ namespace ChatAppShared.Services
             FilteredContacts = Contacts?.ToList().Where(u => ($"{u.FirstName} {u.LastName}").ToLower().Contains(searchText.ToLower())).ToList();
             OnChange?.Invoke();
         }
-        public async Task Get()
+        public async Task Get(bool isFirstTime = false)
         {
-            LoadingStatus = LoadingStatus.LoadingInProgress;
-            OnChange?.Invoke();
+            if (isFirstTime)
+            {
+                LoadingStatus = LoadingStatus.LoadingInProgress;
+                OnChange?.Invoke();
+            }
+
             try
             {
                 Contacts = await httpClient.GetFromJsonAsync<List<ConversationContactDTO>>(AppConfig.CONTACTS_LIST_PATH);
                 FilteredContacts = Contacts;
-                LoadingStatus = Contacts != null ? LoadingStatus.LoadingSucceed : LoadingStatus.LoadingFailed;
+                if (isFirstTime)
+                {
+                    LoadingStatus = Contacts != null ? LoadingStatus.LoadingSucceed : LoadingStatus.LoadingFailed;
+                }
             }
             catch (Exception)
             {
-                LoadingStatus = LoadingStatus.LoadingFailed;
-
+                if (isFirstTime)
+                {
+                    LoadingStatus = LoadingStatus.LoadingFailed;
+                }
             }
             OnChange?.Invoke();
+        }
+        public async Task NotifyReaded(string conversationId)
+        {
+            await UpdateMessagesToReaded(conversationId);
         }
         public async Task Notify()
         {
             await Get();
+        }
+        private async Task UpdateMessagesToReaded(string conversationId)
+        {
+                var response = await httpClient.PutAsJsonAsync<string>(AppConfig.UPDATE_READED_MESSAGES_PATH, conversationId);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await Get();
+            }
+
         }
     }
 }

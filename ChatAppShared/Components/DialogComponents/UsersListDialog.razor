@@ -99,79 +99,8 @@
 
     private void HandleContactFilter(string searchText)
     {
-        Console.WriteLine(searchText);
-        _filteredUsers = _users.Where(u => u.Email.Contains(searchText) || ($"{u.FirstName} {u.LastName}").Contains(searchText)).ToList();
+        searchText = searchText.ToLower();
+        _filteredUsers = _users.Where(u => u.Email.ToLower().Contains(searchText) || ($"{u.FirstName} {u.LastName}").ToLower().Contains(searchText)).ToList();
         StateHasChanged();
     }
-
-
-    //     = new List<UserToContactDTO>
-// {
-//     new UserToContactDTO
-//     {
-//         Id = "1",
-//         FirstName = "John",
-//         LastName = "Doe",
-//         Avatar = "1.png",
-//         Email = "john@example.com"
-//     },
-//     new UserToContactDTO
-//     {
-//         Id = "2",
-//         FirstName = "Alice",
-//         LastName = "Smith",
-//         Avatar = "2.png",
-//         Email = "alice@example.com"
-//     },
-//     new UserToContactDTO
-//     {
-//         Id = "3",
-//         FirstName = "Bob",
-//         LastName = "Johnson",
-//         Avatar = "3.png",
-//         Email = "bob@example.com"
-//     },
-//     new UserToContactDTO
-//     {
-//         Id = "4",
-//         FirstName = "Emma",
-//         LastName = "Brown",
-//         Avatar = "4.png",
-//         Email = "emma@example.com"
-//     },
-//     new UserToContactDTO
-//     {
-//         Id = "5",
-//         FirstName = "Michael",
-//         LastName = "Wilson",
-//         Avatar = "5.png",
-//         Email = "michael@example.com"
-//     },
-//     new UserToContactDTO
-//     {
-//         Id = "6",
-//         FirstName = "Olivia",
-//         LastName = "Martinez",
-//         Avatar = "6.png",
-//         Email = "olivia@example.com"
-//     },
-//     new UserToContactDTO
-//     {
-//         Id = "7",
-//         FirstName = "William",
-//         LastName = "Garcia",
-//         Avatar = "7.png",
-//         Email = "william@example.com"
-//     },
-//     new UserToContactDTO
-//     {
-//         Id = "8",
-//         FirstName = "Sophia",
-//         LastName = "Lopez",
-//         Avatar = "8.png",
-//         Email = "sophia@example.com"
-//     }
-// };
-
-
 }

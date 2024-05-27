@@ -16,9 +16,9 @@ namespace ChatAppShared.Services.Interfaces
         public Task Start(string userId);
         public bool GetUserConnectivity(string userId);
         public Task DisposeAsync();
-        public Task NotifyUser();
+        public Task NotifyUser(MessageDTO message);
         public Task NotifyUserById(string userId);
-        public void Add(MessageDTO message);
+        public Task Add(MessageDTO message);
 
     }
 }

@@ -18,8 +18,9 @@ namespace ChatAppShared
         public const string CONTACTS_LIST_PATH = "api/Home/GetContactConversations";
         public const string USERS_LIST_PATH = "api/Home/GetUsersToContact";
         public const string MESSAGES_LIST_PATH = "/api/Home/GetMessages";
+        public const string MESSAGES_BY_ID_PATH = "/api/Home/GetMessageById";
         public const string ADD_MESSAGE_PATH = "api/Home/AddMessage";
-        public const string UPDATE_READED_MESSAGE_PATH = "api/Home/UpdateMessage";
+        public const string UPDATE_READED_MESSAGES_PATH = "api/Home/UpdateMessages";
         public const string ADD_CONVERSATION_PATH = "api/Home/AddConversation";
         public const string DELETE_CONVERSATION_PATH = "api/Home/DeleteConversationById";
         public const string UPLOAD_FILE_PATH = "api/Home/UploadFile";

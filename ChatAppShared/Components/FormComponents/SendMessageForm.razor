@@ -33,17 +33,6 @@
             return;
         }
         var conversationId = CurrentContactServices.CurrentContact?.ConversationId;
-        // ChatNotificationServices.Add(
-        //     new MessageDTO()
-        //         {
-        //             Id = Guid.NewGuid().ToString(),
-        //             Content = TextValue,
-        //             SentDate = DateTime.Now,
-        //             ConversationId = conversationId,
-        //             SenderId = (await AuthStat).User.GetClaim(ClaimTypes.NameIdentifier),
-        //             Type = MessageType.Text
-        //         }
-        // );
         var message = new MessageFormDTO()
             {
                 Content = TextValue,
@@ -61,11 +50,11 @@
                 case HttpStatusCode.OK:
                     TextValue = "";
                     StateHasChanged();
-                    await ChatNotificationServices.NotifyUser();
                     var messageRes = await response.Content.ReadFromJsonAsync<MessageDTO>();
                     if (messageRes is not null)
                     {
-                        ChatNotificationServices.Add(messageRes);
+                        await ChatNotificationServices.NotifyUser(messageRes);
+                        await ChatNotificationServices.Add(messageRes);
                     }
                     await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
                     break;

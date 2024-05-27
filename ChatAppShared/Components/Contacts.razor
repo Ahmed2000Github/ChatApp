@@ -107,8 +107,7 @@
         DisplayServices.OnChange += StateHasChanged;
         CurrentContactServices.OnChange += StateHasChanged;
         ChatNotificationServices.OnChange += StateHasChanged;
-
-        await RetriveConversationsContacts();
+        await ContactsServices.Get(true);
     }
 
     private async Task AddContactButtonCliked()
@@ -129,7 +128,7 @@
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
-                        await RetriveConversationsContacts();
+                        await ContactsServices.Get();
                         await ChatNotificationServices.NotifyUserById(recieverId);
                         Snackbar.Add("Adding new conversation is completed successfuly.", Severity.Success);
                         break;
@@ -160,15 +159,11 @@
         }
     }
 
-    private async Task RetriveConversationsContacts()
-    {
-        await ContactsServices.Get();
-    }
-
     private async Task ContactClicked(ConversationContactDTO contact)
     {
         CurrentContactServices.Notify(contact);
         await ChatNotificationServices.Get(contact.ConversationId ?? "");
+        ContactsServices.NotifyReaded(contact.ConversationId ?? "");
         await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
 
         if (DisplayServices.DisplayState != DisplayState.BothState)

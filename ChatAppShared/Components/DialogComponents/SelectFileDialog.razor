@@ -1,9 +1,9 @@
 ﻿@implements IDisposable
 
 <style>
-    @@media (max-width:600px){
+    @@media (max-width:600px) {
         .mud-dialog-width-full {
-            width:96%;
+            width: 96%;
         }
     }
 </style>
@@ -126,12 +126,12 @@
 
         if (response.IsSuccessStatusCode)
         {
-            await ChatNotificationServices.NotifyUser();
             _isSendingFile = false;
             var message = await response.Content.ReadFromJsonAsync<MessageDTO>();
             if (message is not null)
             {
-                ChatNotificationServices.Add(message);
+                await ChatNotificationServices.NotifyUser(message);
+                await ChatNotificationServices.Add(message);
             }
             await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
             MudDialog.Close(DialogResult.Ok(true));
@@ -212,12 +212,12 @@
 
             if (response.IsSuccessStatusCode)
             {
-                await ChatNotificationServices.NotifyUser();
                 _isSendingFile = false;
                 var message = await response.Content.ReadFromJsonAsync<MessageDTO>();
                 if (message is not null)
                 {
-                    ChatNotificationServices.Add(message);
+                await ChatNotificationServices.NotifyUser(message);
+                    await ChatNotificationServices.Add(message);
                 }
                 await JsRuntime.InvokeAsync<string>("scrollToBottom", "scrollableDiv");
                 MudDialog.Close(DialogResult.Ok(true));
