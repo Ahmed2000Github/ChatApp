@@ -31,7 +31,7 @@ This project is a simple real-time chat application built with .NET and SignalR.
 1. **Clone the Repository**:
    
    ```sh
-   git clone https://github.com/username/repository.git
+   git clone https://github.com/Ahmed2000Github/ChatApp.git
    cd repository
    
 3. **DataBase setup**:
